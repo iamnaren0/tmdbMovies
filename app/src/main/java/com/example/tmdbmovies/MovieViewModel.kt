@@ -16,6 +16,7 @@ import com.example.data.room.BookmarkedMovieEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import kotlin.toString
 
 class MovieViewModel(
@@ -59,13 +60,15 @@ class MovieViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val response = getTrendingMoviesUseCase.execute(page)
-                _trendingMovies.value = response
-                response?.results?.let { movies ->
-                    movieDao.clearMovies() // Clear old data
-                    movieDao.insertMovies(movies.map { MovieEntity(it.id, it.title, it.overview,
-                        it.poster_path.toString(), it.releaseDate, it.voteAverage) })
-                } ?: setUpTendingFromDB()
+                withTimeout(10000) {
+                    val response = getTrendingMoviesUseCase.execute(page)
+                    _trendingMovies.value = response
+                    response?.results?.let { movies ->
+                        movieDao.clearMovies() // Clear old data
+                        movieDao.insertMovies(movies.map { MovieEntity(it.id, it.title, it.overview,
+                            it.poster_path.toString(), it.releaseDate, it.voteAverage) })
+                    } ?: setUpTendingFromDB()
+                }
             } catch (e: Exception) {
                 setUpTendingFromDB()
             } finally {
@@ -85,19 +88,18 @@ class MovieViewModel(
 
     fun fetchNowPlayingMovies(page: Int = 1) {
         viewModelScope.launch {
-            _isLoading.value = true
             try {
-                val response = getNowPlayingMoviesUseCase.execute(page)
-                _nowPlayingMovies.value = response
-                response?.results?.let { movies ->
-                    movieDao.clearMovies() // Clear old data
-                    movieDao.insertMovies(movies.map { MovieEntity(it.id, it.title, it.overview,
-                        it.poster_path.toString(), it.releaseDate, it.voteAverage) })
-                } ?: setUpNowPlayingFromDB()
+                withTimeout(10000) {
+                    val response = getNowPlayingMoviesUseCase.execute(page)
+                    _nowPlayingMovies.value = response
+                    response?.results?.let { movies ->
+                        movieDao.clearMovies() // Clear old data
+                        movieDao.insertMovies(movies.map { MovieEntity(it.id, it.title, it.overview,
+                            it.poster_path.toString(), it.releaseDate, it.voteAverage) })
+                    } ?: setUpNowPlayingFromDB()
+                }
             } catch (e: Exception) {
                 setUpNowPlayingFromDB()
-            } finally {
-                _isLoading.value = false
             }
         }
     }
@@ -135,7 +137,6 @@ class MovieViewModel(
         }
     }
 
-    // In-memory bookmark logic (replace with DB for persistence)
     fun bookmarkMovie(movieId: Int) {
         val movie = _movieDetails.value
         if (movie != null) {

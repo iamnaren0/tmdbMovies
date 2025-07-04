@@ -10,7 +10,6 @@ class MovieRepositoryImpl(private val movieApiService: MovieApiService) : MovieR
             val movies = movieApiService.getMovies()
             movies
         } catch (e: Exception) {
-            // Log the error or handle it appropriately
             emptyList()
         }
     }
@@ -19,7 +18,6 @@ class MovieRepositoryImpl(private val movieApiService: MovieApiService) : MovieR
         return try {
             movieApiService.getTrendingMovies(page)
         } catch (e: Exception) {
-            // Log the error or handle it appropriately
             null
         }
     }
@@ -28,7 +26,6 @@ class MovieRepositoryImpl(private val movieApiService: MovieApiService) : MovieR
         return try {
             movieApiService.getNowPlayingMovies(page)
         } catch (e: Exception) {
-            // Log the error or handle it appropriately
             null
         }
     }
@@ -37,7 +34,6 @@ class MovieRepositoryImpl(private val movieApiService: MovieApiService) : MovieR
         return try {
             movieApiService.getMovieDetails(movieId)
         } catch (e: Exception) {
-            // Log the error or handle it appropriately
             null
         }
     }
@@ -49,7 +45,6 @@ class MovieRepositoryImpl(private val movieApiService: MovieApiService) : MovieR
         return try {
             movieApiService.searchMovies(query, page)
         } catch (e: Exception) {
-            // Log the error or handle it appropriately
             null
         }
     }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -65,50 +66,52 @@ fun HomeScreen(
     if (isLoading) {
         Loader()
     } else {
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-            TopAppBar(
-                title = {
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = "Welcome to Movie Apps".toUpperCase(),
-                            color = Color.Black,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.align(Alignment.TopStart)
-                        )
+        // Use LazyColumn for the whole content to enable scrolling of all content
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(16.dp)
+        ) {
+            item {
+                TopAppBar(
+                    title = {
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = "Welcome to Movie Apps".toUpperCase(),
+                                color = Color.Black,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.align(Alignment.TopStart)
+                            )
+                        }
+                    },
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "TRENDING MOVIES",
+                        modifier = Modifier.weight(1f),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                    IconButton(onClick = onBookmarksClick) {
+                        Icon(Icons.Default.Bookmarks, contentDescription = "Bookmarks")
                     }
-                },
-            )
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onSearchClick) {
+                        Icon(Icons.Default.Search, contentDescription = "Search")
+                    }
+                }
+                trending?.results?.let { movies ->
+                    AutoScrollingRow(movies = movies, onMovieClick = onMovieClick)
+                }
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "TRENDING MOVIES",
-                    modifier = Modifier.weight(1f),
+                    text = "NOW PLAYING MOVIES",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
                 )
-                IconButton(onClick = onBookmarksClick) {
-                    Icon(Icons.Default.Bookmarks, contentDescription = "Bookmarks")
-                }
-                IconButton(onClick = onSearchClick) {
-                    Icon(Icons.Default.Search, contentDescription = "Search")
-                }
             }
-            trending?.results?.let { movies ->
-                AutoScrollingRow(movies = movies, onMovieClick = onMovieClick)
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "NOW PLAYING MOVIES",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
-            )
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                nowPlaying?.results?.let { movies ->
-                    items(movies) { movie ->
-                        MovieListItem(movie = movie, onClick = { onMovieClick(movie.id) })
-                    }
+            nowPlaying?.results?.let { movies ->
+                items(movies) { movie ->
+                    MovieListItem(movie = movie, onClick = { onMovieClick(movie.id) })
                 }
             }
         }
@@ -133,12 +136,14 @@ fun MovieListItem(movie: com.example.data.Movie, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .height(300.dp)
+            .height(250.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
-        Column {
+        Column(
+            modifier = Modifier
+        ) {
             val posterUrl = movie.poster_path?.takeIf { it.isNotBlank() }?.let { "https://image.tmdb.org/t/p/w500$it" }
 
             Image(
@@ -151,13 +156,16 @@ fun MovieListItem(movie: com.example.data.Movie, onClick: () -> Unit) {
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp) // Set image height
+                    .height(210.dp)
             )
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = movie.title ?: "",
+                text = movie.title ?: "Unknown Title",
                 modifier = Modifier
-                    .fillMaxWidth(),
-                fontWeight = FontWeight.Bold
+                    .wrapContentHeight()
+                    .padding(start = 8.dp),
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
             )
         }
     }
@@ -169,7 +177,7 @@ fun AutoScrollingRow(movies: List<com.example.data.Movie>, onMovieClick: (Int) -
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(3000) // Auto-scroll every 3 seconds
+            delay(3000)
             val nextScroll = (scrollState.value + 500).coerceAtMost(scrollState.maxValue)
             scrollState.animateScrollTo(nextScroll)
         }
@@ -183,23 +191,38 @@ fun AutoScrollingRow(movies: List<com.example.data.Movie>, onMovieClick: (Int) -
         movies.forEach { movie ->
             Card(
                 modifier = Modifier
-                    .width(300.dp) // Wider card to cover screen
-                    .height(200.dp) // Shorter height for card
+                    .width(300.dp)
+                    .height(260.dp)
+                    .background(color = Color.White)
                     .padding(8.dp)
                     .clickable { onMovieClick(movie.id) },
                 shape = RoundedCornerShape(8.dp),
                 elevation = CardDefaults.cardElevation(4.dp)
             ) {
-                Image(
-                    painter = rememberAsyncImagePainter(
-                        model = "https://image.tmdb.org/t/p/w500${movie.poster_path}",
-                        error = painterResource(id = android.R.drawable.ic_menu_report_image),
-                        placeholder = painterResource(id = android.R.drawable.ic_menu_gallery)
-                    ),
-                    contentDescription = "Movie Poster",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
+                Column {
+                    Image(
+                        painter = rememberAsyncImagePainter(
+                            model = "https://image.tmdb.org/t/p/w500${movie.poster_path}",
+                            error = painterResource(id = android.R.drawable.ic_menu_report_image),
+                            placeholder = painterResource(id = android.R.drawable.ic_menu_gallery)
+                        ),
+                        contentDescription = "Movie Poster",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(215.dp)
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = movie.title ?: "Unknown Title",
+                        modifier = Modifier
+                            .wrapContentHeight()
+                            .padding(start = 8.dp),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = Color.Black
+                    )
+                }
             }
         }
     }
